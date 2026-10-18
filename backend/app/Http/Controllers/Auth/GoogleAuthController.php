@@ -1,162 +1,91 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\LinkGoogleAccount;
+use App\Actions\SignInWithGoogle;
+use App\Enums\GoogleAuthOutcome;
 use App\Http\Controllers\Controller;
-use App\Models\SocialAccount;
-use App\Models\User;
-use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
+/**
+ * Handles "Continue with Google" and linking Google to an existing account.
+ *
+ * Flow: redirect() or link() sends the user to Google. Google sends them back to callback(),
+ * which finishes the job and redirects to the frontend with ?oauth=<result>.
+ */
 class GoogleAuthController extends Controller
 {
-    public function redirect()
+    /**
+     * Send the user to Google's sign-in page.
+     */
+    public function redirect(): RedirectResponse
     {
         return Socialite::driver('google')->redirect();
     }
 
-    public function link()
+    /**
+     * Send a logged-in user to Google so they can link their Google account.
+     *
+     * We remember in the session that this is a "link" request, so callback() knows what to do.
+     */
+    public function link(Request $request): RedirectResponse
     {
-        request()->session()->put('google_oauth_intent', 'link');
+        $request->session()->put('google_oauth_intent', 'link');
 
         return Socialite::driver('google')->redirect();
     }
 
-    public function callback(Request $request)
-    {
+    /**
+     * Handle the user coming back from Google.
+     *
+     * Gets the Google profile, checks that Google has verified the email, then either signs
+     * the user in or links Google to their account.
+     */
+    public function callback(
+        Request $request,
+        SignInWithGoogle $signInWithGoogle,
+        LinkGoogleAccount $linkGoogleAccount,
+    ): RedirectResponse {
         $intent = $request->session()->pull('google_oauth_intent', 'signin');
 
+        // This throws if the user clicked "Cancel" on Google's page or the request was tampered with.
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (Throwable) {
-            return $this->frontendRedirect('oauth=failed');
+            return $this->frontendRedirect(GoogleAuthOutcome::Failed);
         }
 
-        $providerUserId = $googleUser->getId();
+        $providerUserId = (string) $googleUser->getId();
         $email = mb_strtolower((string) $googleUser->getEmail());
         $googleEmailVerified = $googleUser->getRaw()['email_verified'] ?? false;
 
-        if (! $providerUserId || ! filter_var($email, FILTER_VALIDATE_EMAIL) || ! in_array($googleEmailVerified, [true, 1, '1', 'true'], true)) {
-            return $this->frontendRedirect('oauth=unverified_email');
+        if ($providerUserId === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL) || ! in_array($googleEmailVerified, [true, 1, '1', 'true'], true)) {
+            return $this->frontendRedirect(GoogleAuthOutcome::UnverifiedEmail);
         }
 
-        if ($intent === 'link') {
-            return $this->linkAccount($request, $providerUserId, $email);
-        }
+        $outcome = $intent === 'link'
+            ? $linkGoogleAccount->handle($request->user(), $providerUserId, $email)
+            : $signInWithGoogle->handle($providerUserId, $email, $googleUser->getName());
 
-        $socialAccount = SocialAccount::query()
-            ->with('user')
-            ->where('provider', 'google')
-            ->where('provider_user_id', $providerUserId)
-            ->first();
-
-        if ($socialAccount) {
-            Auth::guard('web')->login($socialAccount->user);
+        // Same reason as LoginController: a fresh session ID after logging in.
+        if (in_array($outcome, [GoogleAuthOutcome::Success, GoogleAuthOutcome::Linked], true)) {
             $request->session()->regenerate();
-
-            return $this->frontendRedirect('oauth=success');
         }
 
-        if (User::query()->where('email', $email)->exists()) {
-            return $this->frontendRedirect('oauth=link_required');
-        }
-
-        try {
-            $user = DB::transaction(function () use ($email, $googleUser, $providerUserId): ?User {
-                $user = User::query()->firstOrCreate(
-                    ['email' => $email],
-                    ['name' => $googleUser->getName() ?: Str::before($email, '@')],
-                );
-
-                if (! $user->wasRecentlyCreated) {
-                    return null;
-                }
-
-                $user->forceFill(['email_verified_at' => now()])->save();
-                $user->socialAccounts()->create([
-                    'provider' => 'google',
-                    'provider_user_id' => $providerUserId,
-                ]);
-
-                return $user;
-            });
-        } catch (QueryException $exception) {
-            report($exception);
-
-            return $this->frontendRedirect('oauth=failed');
-        }
-
-        if (! $user) {
-            return $this->frontendRedirect('oauth=link_required');
-        }
-
-        Auth::guard('web')->login($user);
-        $request->session()->regenerate();
-
-        return $this->frontendRedirect('oauth=success');
+        return $this->frontendRedirect($outcome);
     }
 
-    private function linkAccount(Request $request, string $providerUserId, string $email)
+    /**
+     * Send the user back to the frontend login page with the result, e.g. /login?oauth=success.
+     */
+    private function frontendRedirect(GoogleAuthOutcome $outcome): RedirectResponse
     {
-        $user = Auth::guard('web')->user();
-
-        if (! $user) {
-            return $this->frontendRedirect('oauth=login_required');
-        }
-
-        if (User::query()
-            ->where('email', $email)
-            ->whereKeyNot($user->getKey())
-            ->exists()) {
-            return $this->frontendRedirect('oauth=email_in_use');
-        }
-
-        $socialAccount = SocialAccount::query()
-            ->where('provider', 'google')
-            ->where('provider_user_id', $providerUserId)
-            ->first();
-
-        if ($socialAccount && $socialAccount->user_id !== $user->getKey()) {
-            return $this->frontendRedirect('oauth=account_already_linked');
-        }
-
-        $existingProviderLink = $user->socialAccounts()
-            ->where('provider', 'google')
-            ->first();
-
-        if ($existingProviderLink && $existingProviderLink->provider_user_id !== $providerUserId) {
-            return $this->frontendRedirect('oauth=provider_already_linked');
-        }
-
-        try {
-            if (! $socialAccount) {
-                $user->socialAccounts()->create([
-                    'provider' => 'google',
-                    'provider_user_id' => $providerUserId,
-                ]);
-            }
-        } catch (QueryException $exception) {
-            report($exception);
-
-            return $this->frontendRedirect('oauth=account_already_linked');
-        }
-
-        if (! $user->email_verified_at && $user->email === $email) {
-            $user->forceFill(['email_verified_at' => now()])->save();
-        }
-
-        $request->session()->regenerate();
-
-        return $this->frontendRedirect('oauth=linked');
-    }
-
-    private function frontendRedirect(string $query)
-    {
-        return redirect()->away(rtrim(config('services.frontend_url'), '/').'/login?'.$query);
+        return redirect()->away(rtrim((string) config('services.frontend_url'), '/').'/login?oauth='.$outcome->value);
     }
 }

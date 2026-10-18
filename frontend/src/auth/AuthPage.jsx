@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiRequest, getCsrfCookie } from './api.js'
 import PhoneCountryInput from './PhoneCountryInput.jsx'
+import loginIllustration from '../assets/login.svg'
 import './auth.css'
 
 const oauthMessages = {
@@ -31,10 +32,21 @@ export default function AuthPage() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [remember, setRemember] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [resetToken, setResetToken] = useState('')
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const oauthStatus = params.get('oauth')
+    const passwordResetToken = params.get('reset_token')
+
+    if (passwordResetToken) {
+      setMode('reset')
+      setResetToken(passwordResetToken)
+      setForm((current) => ({ ...current, email: params.get('email') || '' }))
+      window.history.replaceState({}, '', window.location.pathname)
+    }
 
     if (oauthStatus) {
       setMessage(oauthMessages[oauthStatus] || 'Google sign-in returned. Refresh your account status if needed.')
@@ -81,12 +93,33 @@ export default function AuthPage() {
             phone_e164: hasPhoneNumber ? form.phone_e164 : null,
             phone_country_iso2: hasPhoneNumber ? form.phone_country_iso2 : null,
           }
-        : { email: form.email, password: form.password }
-      const result = await apiRequest(`/api/${mode === 'register' ? 'register' : 'login'}`, {
+        : mode === 'login'
+          ? { email: form.email, password: form.password, remember }
+          : mode === 'forgot'
+            ? { email: form.email }
+            : { token: resetToken, email: form.email, password: form.password, password_confirmation: form.password_confirmation }
+      const endpoint = {
+        register: '/api/register',
+        login: '/api/login',
+        forgot: '/api/forgot-password',
+        reset: '/api/reset-password',
+      }[mode]
+      const result = await apiRequest(endpoint, {
         method: 'POST',
         body: JSON.stringify(body),
       })
-      setUser(result.user)
+      if (mode === 'register') {
+        setMessage(result.message)
+        setForm({ ...emptyForm, email: form.email })
+        setMode('login')
+      } else if (mode === 'login') {
+        setUser(result.user)
+      } else {
+        setMessage(result.message)
+        setForm({ ...emptyForm, email: form.email })
+        setMode('login')
+        setResetToken('')
+      }
     } catch (error) {
       setFieldErrors(error.fields || {})
       setMessage(error.fields ? '' : error.message)
@@ -113,6 +146,7 @@ export default function AuthPage() {
 
   function changeMode(nextMode) {
     setMode(nextMode)
+    setShowPassword(false)
     setMessage('')
     setFieldErrors({})
   }
@@ -123,83 +157,129 @@ export default function AuthPage() {
 
   return (
     <main className="auth-shell">
-      <section className="auth-card" aria-labelledby="auth-title">
-        <div className="brand-mark" aria-hidden="true">R</div>
-        <p className="eyebrow">RESTRO ACCOUNT</p>
+      <section className={`auth-card${user ? ' auth-card--account' : ''}`} aria-labelledby="auth-title">
+        <div className="auth-art-panel" aria-hidden="true">
+          <img src={loginIllustration} alt="" className="auth-illustration" />
+        </div>
 
-        {user ? (
-          <>
-            <h1 id="auth-title">Welcome, {user.name}</h1>
-            <p className="subtitle">You’re signed in as {user.email}.</p>
-            {message && <p className="notice" role="status">{message}</p>}
-            <div className="account-actions">
-              <a className="button button-google" href="/auth/google/link">
-                <GoogleIcon /> Connect Google account
-              </a>
-              <button className="button button-secondary" onClick={logout} disabled={submitting}>
-                {submitting ? 'Signing out…' : 'Sign out'}
-              </button>
+        <div className="auth-content">
+          {user ? (
+            <div className="account-view">
+              <div className="brand-mark" aria-hidden="true">R</div>
+              <p className="eyebrow">RESTRO ACCOUNT</p>
+              <h1 id="auth-title">Welcome, {user.name}</h1>
+              <p className="subtitle">You’re signed in as {user.email}.</p>
+              {message && <p className="notice" role="status">{message}</p>}
+              <div className="account-actions">
+                <a className="button button-google" href="/auth/google/link">
+                  <GoogleIcon /> Connect Google account
+                </a>
+                <button className="button button-primary" onClick={logout} disabled={submitting}>
+                  {submitting ? 'Signing out…' : 'Sign out'}
+                </button>
+              </div>
             </div>
-          </>
-        ) : (
-          <>
-            <h1 id="auth-title">{mode === 'register' ? 'Create your account' : 'Welcome back'}</h1>
-            <p className="subtitle">
-              {mode === 'register' ? 'Get started with your Restro account.' : 'Sign in to continue to Restro.'}
-            </p>
+          ) : (
+            <>
+              <div className="auth-heading">
+                <p className="eyebrow">RESTRO ACCOUNT</p>
+                <h1 id="auth-title">{mode === 'register' ? 'Create your account' : mode === 'forgot' ? 'Reset your password' : mode === 'reset' ? 'Choose a new password' : 'Welcome back!'}</h1>
+                <p className="subtitle">{mode === 'register' ? 'Create an account to get started' : mode === 'forgot' ? 'We’ll email a secure reset link if an account exists' : mode === 'reset' ? 'Enter your new password below' : 'Please enter your details'}</p>
+              </div>
 
-            <a className="button button-google" href="/auth/google/redirect">
-              <GoogleIcon /> Continue with Google
-            </a>
+              <form className={`auth-form${mode === 'register' ? ' auth-form--register' : ''}`} onSubmit={submit} noValidate>
+                {mode === 'register' && (
+                  <Field label="Full name" name="name" value={form.name} onChange={updateField} error={fieldErrors.name?.[0]} autoComplete="name" />
+                )}
+                <Field label="Email" name="email" type="email" value={form.email} onChange={updateField} error={fieldErrors.email?.[0]} autoComplete="email" />
+                {mode === 'register' && (
+                  <PhoneCountryInput
+                    value={form.phone_e164}
+                    onChange={updatePhone}
+                    error={fieldErrors.phone_e164?.[0] || fieldErrors.phone_country_iso2?.[0]}
+                  />
+                )}
+                {mode !== 'forgot' && <Field
+                  label="Password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={updateField}
+                  error={fieldErrors.password?.[0]}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  trailing={mode !== 'login' && (
+                    <button
+                      className="password-toggle"
+                      type="button"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      onClick={() => setShowPassword((visible) => !visible)}
+                    >
+                      <EyeIcon crossed={!showPassword} />
+                    </button>
+                  )}
+                />}
+                {['register', 'reset'].includes(mode) && (
+                  <Field label="Confirm password" name="password_confirmation" type="password" value={form.password_confirmation} onChange={updateField} error={fieldErrors.password_confirmation?.[0]} autoComplete="new-password" />
+                )}
 
-            <div className="divider"><span>or continue with email</span></div>
+                {mode === 'login' && (
+                  <div className="login-options">
+                    <label className="remember-option">
+                      <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
+                      <span>Remember for 30 days</span>
+                    </label>
+                    <button className="text-action" type="button" onClick={() => { setMode('forgot'); setMessage('') }}>Forgot password?</button>
+                  </div>
+                )}
 
-            <form className="auth-form" onSubmit={submit} noValidate>
-              {mode === 'register' && (
-                <Field label="Full name" name="name" value={form.name} onChange={updateField} error={fieldErrors.name?.[0]} autoComplete="name" />
-              )}
-              <Field label="Email address" name="email" type="email" value={form.email} onChange={updateField} error={fieldErrors.email?.[0]} autoComplete="email" />
-              {mode === 'register' && (
-                <PhoneCountryInput
-                  value={form.phone_e164}
-                  onChange={updatePhone}
-                  error={fieldErrors.phone_e164?.[0] || fieldErrors.phone_country_iso2?.[0]}
-                />
-              )}
-              <Field label="Password" name="password" type="password" value={form.password} onChange={updateField} error={fieldErrors.password?.[0]} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} />
-              {mode === 'register' && (
-                <Field label="Confirm password" name="password_confirmation" type="password" value={form.password_confirmation} onChange={updateField} error={fieldErrors.password_confirmation?.[0]} autoComplete="new-password" />
-              )}
+                {message && <p className="notice" role="alert">{message}</p>}
 
-              {message && <p className="notice" role="alert">{message}</p>}
+                <button className="button button-primary" type="submit" disabled={submitting}>
+                  {submitting ? 'Please wait…' : mode === 'register' ? 'Sign Up' : mode === 'forgot' ? 'Send reset link' : mode === 'reset' ? 'Reset password' : 'Log In'}
+                </button>
+              </form>
 
-              <button className="button button-primary" type="submit" disabled={submitting}>
-                {submitting ? 'Please wait…' : mode === 'register' ? 'Create account' : 'Sign in'}
-              </button>
-            </form>
+              {['login', 'register'].includes(mode) && <>
+                <div className="divider"><span>or continue with</span></div>
+                <a className="button button-google" href="/auth/google/redirect">
+                  <GoogleIcon /> Continue with Google
+                </a>
+              </>}
 
-            <p className="switch-mode">
-              {mode === 'register' ? 'Already have an account?' : 'New to Restro?'}{' '}
-              <button onClick={() => changeMode(mode === 'register' ? 'login' : 'register')}>
-                {mode === 'register' ? 'Sign in' : 'Create an account'}
-              </button>
-            </p>
-          </>
-        )}
-
-        <p className="security-note">Your account is protected with secure, server-managed sessions.</p>
+              <p className="switch-mode">
+                {mode === 'register' ? 'Already have an account?' : mode === 'login' ? "Don't have an account?" : 'Remember your password?'}{' '}
+                <button onClick={() => { setMode(mode === 'register' || mode === 'forgot' || mode === 'reset' ? 'login' : 'register'); setMessage('') }}>
+                  {mode === 'register' || mode === 'forgot' || mode === 'reset' ? 'Log In' : 'Sign Up'}
+                </button>
+              </p>
+            </>
+          )}
+        </div>
       </section>
     </main>
   )
 }
 
-function Field({ label, name, error, ...props }) {
+function Field({ label, name, error, trailing, ...props }) {
   return (
-    <label className="field" htmlFor={name}>
+    <div className="field">
       <span>{label}</span>
-      <input id={name} name={name} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} required {...props} />
+      <div className="field-input-wrap">
+        <input id={name} name={name} aria-invalid={Boolean(error)} aria-describedby={error ? `${name}-error` : undefined} required {...props} />
+        {trailing}
+      </div>
       {error && <small id={`${name}-error`} className="field-error">{error}</small>}
-    </label>
+    </div>
+  )
+}
+
+function EyeIcon({ crossed }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="eye-icon">
+      <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" strokeWidth="1.7" />
+      <circle cx="12" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.7" />
+      {crossed && <path d="m4 4 16 16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />}
+    </svg>
   )
 }
 

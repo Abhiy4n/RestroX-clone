@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { defaultCountries, parseCountry, usePhoneInput } from 'react-international-phone'
 
 const countries = defaultCountries.map(parseCountry)
@@ -6,6 +6,7 @@ const countries = defaultCountries.map(parseCountry)
 export default function PhoneCountryInput({ value, onChange, error }) {
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const containerRef = useRef(null)
 
   const phoneInput = usePhoneInput({
     defaultCountry: 'np',
@@ -27,6 +28,32 @@ export default function PhoneCountryInput({ value, onChange, error }) {
       || country.iso2.includes(query)
   })
 
+  useEffect(() => {
+    if (!menuOpen) return undefined
+
+    function closeOnOutsidePointer(event) {
+      if (!containerRef.current?.contains(event.target)) {
+        setMenuOpen(false)
+        setSearch('')
+      }
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        setSearch('')
+      }
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer)
+    document.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [menuOpen])
+
   function selectCountry(country) {
     phoneInput.setCountry(country.iso2)
     setSearch('')
@@ -34,7 +61,7 @@ export default function PhoneCountryInput({ value, onChange, error }) {
   }
 
   return (
-    <div className="field phone-field">
+    <div className="field phone-field" ref={containerRef}>
       <span>Phone number <span className="optional-label">Optional</span></span>
       <div className="phone-control">
         <button
