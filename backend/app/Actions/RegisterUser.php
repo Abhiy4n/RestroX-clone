@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Creates a new user account from validated sign-up data.
@@ -26,13 +27,24 @@ class RegisterUser
         // If the database fails, record the real error for us and show the user a
         // friendly message instead of a raw database error.
         try {
-            $user = User::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'phone_country_iso2' => $data['phone_country_iso2'] ?? null,
-                'phone_e164' => $data['phone_e164'] ?? null,
-                'password' => $data['password'],
-            ]);
+            $user = DB::transaction(function () use ($data): User {
+
+                // Create the user account.
+                $user = User::create([
+                    'name' => $data['name'],
+                    'email' => $data['email'],
+                    'phone_country_iso2' => $data['phone_country_iso2'] ?? null,
+                    'phone_e164' => $data['phone_e164'] ?? null,
+                    'password' => $data['password'],
+                ]);
+
+                // Automatically create a wallet.
+                $user->wallet()->create([
+                    'currency' => 'NPR',
+                ]);
+
+                return $user;
+            });
         } catch (QueryException $exception) {
             report($exception);
 
@@ -40,7 +52,7 @@ class RegisterUser
         }
 
         $user->sendEmailVerificationNotification();
-        Log::info('User account registered.', ['user_id' => $user->getKey()]);
+        Log::info('User account ad n registered.', ['user_id' => $user->getKey()]);
 
         return $user;
     }

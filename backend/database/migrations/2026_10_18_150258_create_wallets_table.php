@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('wallets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained('users')->cascadeOnDelete();
-            $table->decimal('balance',15,2);
-            $table->string('currency',3)->default('NRP');
+            $table->decimal('balance',15,2)->default(0);
+            $table->string('currency',3)->default('NPR');
             $table->timestamps();
         });
     }

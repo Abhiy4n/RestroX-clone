@@ -25,7 +25,7 @@ class SignInWithGoogle
      * automatically. That would let anyone with a Google account for the email take over
      * the account. The owner has to log in normally and link Google from their settings.
      */
-    public function handle(string $providerUserId, string $email, ?string $name, bool $remeber = false): GoogleAuthOutcome
+    public function handle(string $providerUserId, string $email, ?string $name): GoogleAuthOutcome
     {
         $socialAccount = SocialAccount::query()
             ->with('user')
@@ -34,7 +34,7 @@ class SignInWithGoogle
             ->first();
 
         if ($socialAccount !== null) {
-            return $this->signInLinkedUser($socialAccount->user,$remember);
+            return $this->signInLinkedUser($socialAccount->user,);
         }
 
         if (User::query()->where('email', $email)->exists()) {
@@ -62,6 +62,10 @@ class SignInWithGoogle
                     'provider' => 'google',
                     'provider_user_id' => $providerUserId,
                 ]);
+                
+                $user->wallet()->create([
+                    'currency' => 'NPR'
+                ]);
 
                 return $user;
             });
@@ -75,7 +79,7 @@ class SignInWithGoogle
             return GoogleAuthOutcome::LinkRequired;
         }
 
-        Auth::guard('web')->login($user, $remember);
+        Auth::guard('web')->login($user);
         Log::info('User registered and authenticated with Google.', ['user_id' => $user->getKey()]);
 
         return GoogleAuthOutcome::Success;
