@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PasswordResetLinkController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\UserSessionController;
 use App\Http\Controllers\Api\VerifyEmailController;
+use App\Http\Controllers\Api\WalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:register');
@@ -21,5 +22,9 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])->middlew
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [CurrentUserController::class, 'show']);
     Route::get('/sessions', [UserSessionController::class, 'index']);
+    Route::get('/wallet', [WalletController::class, 'show']);
+    Route::get('/wallet/transactions', [WalletController::class, 'transactions']);
+    Route::post('/wallet/add-money', [WalletController::class, 'addMoney'])->middleware('throttle:wallet-mutations');
+    Route::post('/wallet/send-money', [WalletController::class, 'sendMoney'])->middleware('throttle:wallet-mutations');
     Route::post('/logout', [LogoutController::class, 'destroy']);
 });

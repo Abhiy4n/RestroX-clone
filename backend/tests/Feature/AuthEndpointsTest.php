@@ -30,6 +30,7 @@ class AuthEndpointsTest extends TestCase
             'phone_e164' => '+977 981-234-5678',
             'password' => 'StrongPass123',
             'password_confirmation' => 'StrongPass123',
+            'role' => User::ROLE_ADMIN,
         ]);
 
         $response->assertCreated()
@@ -39,7 +40,13 @@ class AuthEndpointsTest extends TestCase
             ->assertJsonMissingPath('user.password');
 
         $user = User::query()->where('email', 'user@example.com')->firstOrFail();
+        $this->assertSame(User::ROLE_DEVELOPER, $user->role);
         $this->assertNull($user->email_verified_at);
+        $this->assertNotNull($user->wallet);
+        $this->assertDatabaseHas('ledger_accounts', [
+            'wallet_id' => $user->wallet->id,
+            'code' => 'wallet:'.$user->wallet->id,
+        ]);
         Notification::assertSentTo($user, VerifyEmail::class);
     }
 

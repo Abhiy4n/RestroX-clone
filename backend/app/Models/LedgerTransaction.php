@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LedgerTransaction extends Model
 {
@@ -14,7 +14,8 @@ class LedgerTransaction extends Model
         'status',
         'amount_minor',
         'currency',
-        'idempotency_key',
+        'idempotency_scope',
+        'idempotency_key_hash',
         'initiated_by',
         'description',
         'posted_at',

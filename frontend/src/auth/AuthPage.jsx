@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiRequest, getCsrfCookie } from './api.js'
 import PhoneCountryInput from './PhoneCountryInput.jsx'
+import Dashboard from '../dashboard/Dashboard.jsx'
 import loginIllustration from '../assets/login.svg'
 import './auth.css'
 
@@ -153,6 +154,10 @@ export default function AuthPage() {
 
   if (loading) {
     return <main className="auth-shell"><div className="loading-card">Loading your account…</div></main>
+  }
+
+  if (user) {
+    return <Dashboard user={user} onLogout={logout} isLoggingOut={submitting} />
   }
 
   return (

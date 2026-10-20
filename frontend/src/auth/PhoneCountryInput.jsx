@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { defaultCountries, parseCountry, usePhoneInput } from 'react-international-phone'
+import '../styles/motion.css'
 
 const countries = defaultCountries.map(parseCountry)
 
@@ -7,6 +8,8 @@ export default function PhoneCountryInput({ value, onChange, error }) {
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const containerRef = useRef(null)
+  const triggerRef = useRef(null)
+  const searchRef = useRef(null)
 
   const phoneInput = usePhoneInput({
     defaultCountry: 'np',
@@ -31,6 +34,8 @@ export default function PhoneCountryInput({ value, onChange, error }) {
   useEffect(() => {
     if (!menuOpen) return undefined
 
+    requestAnimationFrame(() => searchRef.current?.focus())
+
     function closeOnOutsidePointer(event) {
       if (!containerRef.current?.contains(event.target)) {
         setMenuOpen(false)
@@ -42,6 +47,7 @@ export default function PhoneCountryInput({ value, onChange, error }) {
       if (event.key === 'Escape') {
         setMenuOpen(false)
         setSearch('')
+        triggerRef.current?.focus()
       }
     }
 
@@ -58,6 +64,7 @@ export default function PhoneCountryInput({ value, onChange, error }) {
     phoneInput.setCountry(country.iso2)
     setSearch('')
     setMenuOpen(false)
+    requestAnimationFrame(() => triggerRef.current?.focus())
   }
 
   return (
@@ -65,6 +72,7 @@ export default function PhoneCountryInput({ value, onChange, error }) {
       <span>Phone number <span className="optional-label">Optional</span></span>
       <div className="phone-control">
         <button
+          ref={triggerRef}
           className="country-trigger"
           type="button"
           aria-label={`Select country, current ${phoneInput.country.name} +${phoneInput.country.dialCode}`}
@@ -91,10 +99,9 @@ export default function PhoneCountryInput({ value, onChange, error }) {
         />
       </div>
 
-      {menuOpen && (
-        <div className="country-menu">
+        <div className={`country-menu motion-dropdown${menuOpen ? ' open' : ''}`} aria-hidden={!menuOpen} inert={!menuOpen}>
           <input
-            autoFocus
+            ref={searchRef}
             className="country-search"
             type="search"
             placeholder="Search country…"
@@ -120,7 +127,6 @@ export default function PhoneCountryInput({ value, onChange, error }) {
             {filteredCountries.length === 0 && <p className="country-empty">No countries found.</p>}
           </div>
         </div>
-      )}
       {error && <small id="phone_e164-error" className="field-error">{error}</small>}
     </div>
   )

@@ -24,6 +24,10 @@ use Illuminate\Notifications\Notifiable;
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_DEVELOPER = 'developer';
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, MustVerifyEmailTrait, Notifiable;
 
@@ -60,8 +64,24 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
-    public function wallet():Hasone
+
+    public function wallet(): HasOne
     {
         return $this->hasOne(Wallet::class);
+    }
+
+    /**
+     * Get the merchants owned by this user.
+     *
+     * @return HasMany<Merchant, $this>
+     */
+    public function merchants(): HasMany
+    {
+        return $this->hasMany(Merchant::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
     }
 }

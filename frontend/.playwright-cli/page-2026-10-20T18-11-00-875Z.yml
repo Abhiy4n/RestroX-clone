@@ -1,0 +1,57 @@
+- main [ref=f2e3]:
+  - generic [ref=f2e4]:
+    - generic [ref=f2e5]:
+      - button "D demo.account@example.com Sandbox" [ref=f2e7] [cursor=pointer]:
+        - generic [ref=f2e8]: D
+        - generic [ref=f2e9]: demo.account@example.com
+        - generic [ref=f2e10]: Sandbox
+      - button "Toggle navigation" [ref=f2e13] [cursor=pointer]
+    - generic [ref=f2e16]:
+      - complementary [ref=f2e17]:
+        - generic [ref=f2e19]:
+          - combobox "Search navigation" [ref=f2e22]
+          - generic [ref=f2e23]: /
+        - navigation "Workspace" [ref=f2e24]:
+          - paragraph [ref=f2e25]: Workspace
+          - button "Overview" [ref=f2e26] [cursor=pointer]
+          - button "Wallet" [ref=f2e29] [cursor=pointer]
+          - button "Transactions" [ref=f2e32] [cursor=pointer]
+        - navigation "Integration" [ref=f2e35]:
+          - paragraph [ref=f2e36]: Integration
+          - button "Merchants" [ref=f2e37] [cursor=pointer]
+          - button "API Keys" [ref=f2e40] [cursor=pointer]
+          - button "Webhooks" [ref=f2e43] [cursor=pointer]
+        - navigation "Payments" [ref=f2e46]:
+          - paragraph [ref=f2e47]: Payments
+          - button "Payment Sessions" [ref=f2e48] [cursor=pointer]
+          - button "Refunds" [ref=f2e51] [cursor=pointer]
+          - button "Test Cards" [ref=f2e54] [cursor=pointer]
+      - generic [ref=f2e57]:
+        - generic [ref=f2e58]:
+          - generic [ref=f2e59]:
+            - paragraph [ref=f2e60]: RESTRO / SANDBOX
+            - heading "Sandbox overview" [level=1] [ref=f2e61]
+            - paragraph [ref=f2e62]: Your virtual payment workspace at a glance
+          - generic [ref=f2e63]: Test mode
+        - generic [ref=f2e65]:
+          - article [ref=f2e66]:
+            - generic [ref=f2e67]: Available balance
+            - strong [ref=f2e68]: Loading…
+            - generic [ref=f2e69]: Virtual funds only
+          - article [ref=f2e70]:
+            - generic [ref=f2e71]: Recent transactions
+            - strong [ref=f2e72]: "0"
+            - generic [ref=f2e73]: Latest wallet activity
+          - article [ref=f2e74]:
+            - generic [ref=f2e75]: Gateway status
+            - strong [ref=f2e76]: Operational
+            - generic [ref=f2e77]: Sandbox environment
+        - generic [ref=f2e78]:
+          - generic [ref=f2e79]:
+            - generic [ref=f2e80]:
+              - heading "Recent transactions" [level=2] [ref=f2e81]
+              - paragraph [ref=f2e82]: Your newest simulated money movements
+            - button "View all" [ref=f2e83] [cursor=pointer]
+          - generic [ref=f2e84]:
+            - strong [ref=f2e87]: No transactions yet
+            - generic [ref=f2e88]: Your sandbox wallet activity will appear here.

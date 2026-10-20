@@ -18,6 +18,10 @@ use Illuminate\Support\Str;
  */
 class SignInWithGoogle
 {
+    public function __construct(
+        private readonly ProvisionWallet $provisionWallet,
+    ) {}
+
     /**
      * Log in the user who owns this Google account, or create a new user for it.
      *
@@ -34,7 +38,7 @@ class SignInWithGoogle
             ->first();
 
         if ($socialAccount !== null) {
-            return $this->signInLinkedUser($socialAccount->user,);
+            return $this->signInLinkedUser($socialAccount->user);
         }
 
         if (User::query()->where('email', $email)->exists()) {
@@ -62,10 +66,8 @@ class SignInWithGoogle
                     'provider' => 'google',
                     'provider_user_id' => $providerUserId,
                 ]);
-                
-                $user->wallet()->create([
-                    'currency' => 'NPR'
-                ]);
+
+                $this->provisionWallet->handle($user);
 
                 return $user;
             });

@@ -1,0 +1,36 @@
+.motion-search { position: relative; transition: background-color 180ms var(--motion-ease), box-shadow 180ms var(--motion-ease); }
+.search-leading { position: relative; width: 19px; height: 19px; flex: none; }
+.search-icon, .search-typing-spinner { position: absolute; inset: 0; transition: opacity 120ms ease, transform 180ms var(--motion-ease); }
+.search-icon { transform-origin: center; }
+.motion-search:focus-within .search-icon { transform: translateX(2px) scale(.92); }
+.search-typing-spinner { width: 16px; height: 16px; margin: 1.5px; border: 2px solid #a9aeb6; border-top-color: #525a64; border-radius: 50%; opacity: 0; transform: scale(.65); }
+.search-leading.is-typing .search-icon { opacity: 0; transform: scale(.65); }
+.search-leading.is-typing .search-typing-spinner { opacity: 1; transform: scale(1); animation: motion-spin 620ms linear infinite; }
+
+.motion-dropdown { visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(-7px) scale(.98); transform-origin: top left; transition: opacity 230ms ease, transform 230ms var(--motion-ease), visibility 0s linear 230ms; }
+.motion-dropdown.open { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); transition-delay: 0s; }
+.motion-dropdown.open > .menu-action { animation: menu-item-enter 180ms both; animation-delay: calc(var(--item-index, 0) * 25ms); }
+.motion-chevron { transition: transform var(--motion-normal) var(--motion-ease); }
+[aria-expanded="true"] > .motion-chevron { transform: rotate(180deg); }
+
+.motion-nav-item { position: relative; transition: background-color 170ms ease-out, color 170ms ease-out, font-weight 170ms ease-out, transform var(--motion-press) ease-out; }
+.motion-nav-item:hover { font-weight: 700; }
+.motion-nav-item:active { transform: scale(.985); }
+.motion-nav-item svg { transition: color 170ms ease-out, transform 170ms ease-out; }
+.motion-nav-item:hover svg { transform: translateX(2px); }
+.motion-results { visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(-8px) scale(.98); transform-origin: top left; transition: opacity var(--motion-normal) ease, transform var(--motion-normal) var(--motion-ease), visibility 0s linear var(--motion-normal); }
+.motion-results.open { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); transition-delay: 0s; }
+.motion-results.open > button { animation: result-enter 200ms both; animation-delay: calc(var(--result-index, 0) * 30ms); }
+.motion-route-content { animation: route-enter var(--motion-normal) var(--motion-ease) both; }
+.motion-action { transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform var(--motion-press) ease; }
+.motion-action:active:not(:disabled) { transform: scale(.985); }
+.compact-spinner { width: 15px; height: 15px; flex: none; border: 2px solid #a6abb2; border-top-color: #4f5660; border-radius: 50%; animation: motion-spin 650ms linear infinite; }
+
+@keyframes result-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes menu-item-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes route-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes motion-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

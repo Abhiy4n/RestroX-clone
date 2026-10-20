@@ -34,7 +34,13 @@ class GoogleAuthTest extends TestCase
 
         $user = User::query()->where('email', 'diner@example.com')->firstOrFail();
         $this->assertSame('Google Diner', $user->name);
+        $this->assertSame(User::ROLE_DEVELOPER, $user->role);
         $this->assertNotNull($user->email_verified_at);
+        $this->assertNotNull($user->wallet);
+        $this->assertDatabaseHas('ledger_accounts', [
+            'wallet_id' => $user->wallet->id,
+            'code' => 'wallet:'.$user->wallet->id,
+        ]);
         $this->assertDatabaseHas('social_accounts', [
             'user_id' => $user->id,
             'provider' => 'google',

@@ -6,15 +6,19 @@ namespace App\Actions;
 
 use App\Models\User;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Creates a new user account from validated sign-up data.
  */
 class RegisterUser
 {
+    public function __construct(
+        private readonly ProvisionWallet $provisionWallet,
+    ) {}
+
     /**
      * Save the new user and send them an email verification link.
      *
@@ -38,10 +42,7 @@ class RegisterUser
                     'password' => $data['password'],
                 ]);
 
-                // Automatically create a wallet.
-                $user->wallet()->create([
-                    'currency' => 'NPR',
-                ]);
+                $this->provisionWallet->handle($user);
 
                 return $user;
             });
@@ -52,7 +53,7 @@ class RegisterUser
         }
 
         $user->sendEmailVerificationNotification();
-        Log::info('User account ad n registered.', ['user_id' => $user->getKey()]);
+        Log::info('User account registered.', ['user_id' => $user->getKey()]);
 
         return $user;
     }

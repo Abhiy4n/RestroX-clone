@@ -6,17 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ledgerAccount extends Model
+class LedgerAccount extends Model
 {
-  protected $fillable = [
+    protected $fillable = [
         'code',
         'wallet_id',
         'name',
         'type',
         'normal_side',
         'currency',
-  ];
-  public function wallet(): BelongsTo
+    ];
+
+    public function wallet(): BelongsTo
     {
         return $this->belongsTo(Wallet::class);
     }

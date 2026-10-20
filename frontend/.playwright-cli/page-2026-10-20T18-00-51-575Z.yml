@@ -1,0 +1,59 @@
+- main [ref=e5]:
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - button "Restro home" [ref=e8] [cursor=pointer]: R
+      - button "Toggle navigation" [active] [ref=e9] [cursor=pointer]
+      - button "D demo@example.com" [ref=e13] [cursor=pointer]:
+        - generic [ref=e14]: D
+        - generic [ref=e15]: demo@example.com
+    - generic [ref=e18]:
+      - complementary [ref=e19]:
+        - generic [ref=e20]:
+          - textbox "Search navigation" [ref=e23]:
+            - /placeholder: Search navigation…
+          - generic [ref=e24]: /
+        - navigation "Workspace" [ref=e25]:
+          - paragraph [ref=e26]: Workspace
+          - button "Overview" [ref=e27] [cursor=pointer]
+          - button "Wallet" [ref=e30] [cursor=pointer]
+          - button "Transactions" [ref=e33] [cursor=pointer]
+        - navigation "Integration" [ref=e36]:
+          - paragraph [ref=e37]: Integration
+          - button "Merchants" [ref=e38] [cursor=pointer]
+          - button "API Keys" [ref=e41] [cursor=pointer]
+          - button "Webhooks" [ref=e44] [cursor=pointer]
+        - navigation "Payments" [ref=e47]:
+          - paragraph [ref=e48]: Payments
+          - button "Payment Sessions" [ref=e49] [cursor=pointer]
+          - button "Refunds" [ref=e52] [cursor=pointer]
+          - button "Test Cards" [ref=e55] [cursor=pointer]
+      - button "Close navigation" [ref=e58]
+      - generic [ref=e59]:
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - paragraph [ref=e62]: RESTRO / SANDBOX
+            - heading "Sandbox overview" [level=1] [ref=e63]
+            - paragraph [ref=e64]: Your virtual payment workspace at a glance
+          - generic [ref=e65]: Test mode
+        - generic [ref=e67]:
+          - article [ref=e68]:
+            - generic [ref=e69]: Available balance
+            - strong [ref=e70]: NPR 10,000.00
+            - generic [ref=e71]: Virtual funds only
+          - article [ref=e72]:
+            - generic [ref=e73]: Recent transactions
+            - strong [ref=e74]: "0"
+            - generic [ref=e75]: Latest wallet activity
+          - article [ref=e76]:
+            - generic [ref=e77]: Gateway status
+            - strong [ref=e78]: Operational
+            - generic [ref=e79]: Sandbox environment
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - generic [ref=e82]:
+              - heading "Recent transactions" [level=2] [ref=e83]
+              - paragraph [ref=e84]: Your newest simulated money movements
+            - button "View all" [ref=e85] [cursor=pointer]
+          - generic [ref=e86]:
+            - strong [ref=e89]: No transactions yet
+            - generic [ref=e90]: Your sandbox wallet activity will appear here.

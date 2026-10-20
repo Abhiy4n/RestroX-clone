@@ -33,7 +33,7 @@ class RegisterRequest extends FormRequest
     {
         $this->merge([
             'email' => mb_strtolower(trim((string) $this->input('email'))),
-            'phone_country_iso2' => $this->fFormRequestilled('phone_e164')
+            'phone_country_iso2' => $this->filled('phone_e164')
                 ? mb_strtoupper((string) $this->input('phone_country_iso2'))
                 : null,
             'phone_e164' => (new NormalizePhone)->handle($this->input('phone_e164')),

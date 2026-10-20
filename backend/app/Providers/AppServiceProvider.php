@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -26,6 +29,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('issue-test-money', function (User $user): bool {
+            return $user->is_active && $user->isAdmin();
+        });
+
+        Gate::define('spend-wallet', function (User $user, Wallet $wallet): bool {
+            return $user->is_active && (int) $wallet->user_id === (int) $user->id;
+        });
+
         // Rate limits stop attackers from trying passwords or signing up in bulk.
         // Routes use them by name, e.g. ->middleware('throttle:login').
 
@@ -49,6 +60,10 @@ class AppServiceProvider extends ServiceProvider
         // someone's inbox with reset emails.
         RateLimiter::for('password-recovery', function (Request $request): Limit {
             return Limit::perMinute(3)->by(Str::lower($request->string('email')->toString()).'|'.$request->ip());
+        });
+
+        RateLimiter::for('wallet-mutations', function (Request $request): Limit {
+            return Limit::perMinute(30)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip()));
         });
 
         // Point the link in the reset email at the React frontend instead of a backend page.
