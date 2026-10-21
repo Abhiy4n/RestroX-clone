@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { apiRequest } from '../auth/api.js'
 import '../styles/motion.css'
+import ApiKeysPage from './integration/ApiKeysPage.jsx'
+import MerchantsPage from './integration/MerchantsPage.jsx'
+import Icon from './Icon.jsx'
 import './dashboard.css'
+import './integration/integration.css'
 
 const navigation = [
   { label: 'Workspace', items: [{ id: 'overview', label: 'Overview', path: '/dashboard' }, { id: 'wallet', label: 'Wallet', path: '/dashboard/wallet' }, { id: 'transactions', label: 'Transactions', path: '/dashboard/transactions' }] },
@@ -25,6 +29,8 @@ const pages = {
 }
 
 export default function Dashboard({ user, onLogout, isLoggingOut }) {
+  const [themePreference, setThemePreference] = useState(() => window.localStorage.getItem('restro-dashboard-theme') || 'system')
+  const [systemTheme, setSystemTheme] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
   const [activePage, setActivePage] = useState(() => navigationItems.find((item) => item.path === window.location.pathname)?.id || overviewItem.id)
   const [accountOpen, setAccountOpen] = useState(false)
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
@@ -49,12 +55,26 @@ export default function Dashboard({ user, onLogout, isLoggingOut }) {
     ? navigationItems.filter((item) => item.label.toLowerCase().includes(query.trim().toLowerCase()))
     : []
   const showSearchResults = searchOpen && hasSearchQuery
+  const isIntegrationPage = ['merchants', 'api-keys'].includes(activePage)
   const [title, description] = pages[activePage]
+  const theme = themePreference === 'system' ? systemTheme : themePreference
 
   function stopSearchTyping() {
     clearTimeout(searchTypingTimer.current)
     setSearchTyping(false)
   }
+
+  useEffect(() => {
+    const colorScheme = window.matchMedia('(prefers-color-scheme: dark)')
+    const updateSystemTheme = (event) => setSystemTheme(event.matches ? 'dark' : 'light')
+    colorScheme.addEventListener('change', updateSystemTheme)
+    return () => colorScheme.removeEventListener('change', updateSystemTheme)
+  }, [])
+
+  useEffect(() => {
+    if (themePreference === 'system') window.localStorage.removeItem('restro-dashboard-theme')
+    else window.localStorage.setItem('restro-dashboard-theme', themePreference)
+  }, [themePreference])
 
   useEffect(() => {
     Promise.all([apiRequest('/api/wallet'), apiRequest('/api/wallet/transactions')])
@@ -185,7 +205,7 @@ export default function Dashboard({ user, onLogout, isLoggingOut }) {
     }
   }
 
-  return <main className="dashboard-canvas"><div className="dashboard-shell">
+  return <main className="dashboard-canvas" data-theme={theme}><div className="dashboard-shell">
     <header className="dashboard-topbar">
       <div className="account-control">
         <button ref={accountButton} className="account-button motion-action" type="button" aria-expanded={accountOpen} onClick={toggleAccount}>
@@ -193,7 +213,8 @@ export default function Dashboard({ user, onLogout, isLoggingOut }) {
         </button>
         <div ref={accountMenu} className={`account-menu motion-dropdown${accountOpen ? ' open' : ''}`} aria-hidden={!accountOpen} inert={!accountOpen}>
           <a className="menu-action motion-action" href="/auth/google/link" style={{ '--item-index': 0 }}><Icon name="link" /> Connect Google</a>
-          <button className="menu-action motion-action" type="button" disabled={isLoggingOut} onClick={onLogout} style={{ '--item-index': 1 }}>{isLoggingOut ? <span className="compact-spinner" aria-hidden="true" /> : <Icon name="logout" />} {isLoggingOut ? 'Signing out…' : 'Sign out'}</button>
+          <button className="menu-action theme-menu-action motion-action" type="button" role="switch" aria-checked={theme === 'dark'} onClick={() => setThemePreference(theme === 'dark' ? 'light' : 'dark')} style={{ '--item-index': 1 }}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /><span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span><span className="theme-toggle" aria-hidden="true"><span /></span></button>
+          <button className="menu-action motion-action" type="button" disabled={isLoggingOut} onClick={onLogout} style={{ '--item-index': 2 }}>{isLoggingOut ? <span className="compact-spinner" aria-hidden="true" /> : <Icon name="logout" />} {isLoggingOut ? 'Signing out…' : 'Sign out'}</button>
         </div>
       </div>
       <span className="topbar-slash topbar-secondary-slash">/</span>
@@ -219,14 +240,16 @@ export default function Dashboard({ user, onLogout, isLoggingOut }) {
         </nav>)}
       </aside>
       <button className={`dashboard-overlay${sidebarOpen ? ' show' : ''}`} type="button" onClick={() => setSidebarOpen(false)} aria-label="Close navigation" />
-      <section className="dashboard-content">
+      <section className={`dashboard-content${isIntegrationPage ? ' integration-content' : ''}`}>
         <div className="motion-route-content" key={activePage}>
-          <div className="content-heading"><div><p className="content-eyebrow">RESTRO / SANDBOX</p><h1 ref={routeHeading} tabIndex="-1">{title}</h1><p>{description}</p></div><span className="mode-chip"><span /> Test mode</span></div>
+          {!isIntegrationPage && <div className="content-heading"><div><p className="content-eyebrow">RESTRO / SANDBOX</p><h1 ref={routeHeading} tabIndex="-1">{title}</h1><p>{description}</p></div><span className="mode-chip"><span /> Test mode</span></div>}
           {dataError && <p className="dashboard-notice" role="alert">{dataError}</p>}
           {activePage === 'overview' && <Overview wallet={wallet} transactions={transactions} onNavigate={selectPage} />}
           {activePage === 'wallet' && <WalletPanel wallet={wallet} />}
           {activePage === 'transactions' && <TransactionList transactions={transactions} />}
-          {!['overview', 'wallet', 'transactions'].includes(activePage) && <UpcomingPanel title={title} />}
+          {activePage === 'merchants' && <MerchantsPage />}
+          {activePage === 'api-keys' && <ApiKeysPage />}
+          {!['overview', 'wallet', 'transactions', 'merchants', 'api-keys'].includes(activePage) && <UpcomingPanel title={title} />}
         </div>
       </section>
     </div>
@@ -254,9 +277,4 @@ function TransactionList({ transactions }) {
 
 function UpcomingPanel({ title }) {
   return <section className="dashboard-panel centered-panel"><span className="large-icon"><Icon name="layers" /></span><p>Backend milestone</p><h2>{title} is coming next</h2><small>This workspace is ready once its secure backend endpoint is implemented.</small></section>
-}
-
-function Icon({ name, className = '' }) {
-  const paths = { overview: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M9 20v-6h6v6', wallet: 'M4 6.5h14a2 2 0 0 1 2 2V18H4a2 2 0 0 1-2-2V6.5Zm0 0V5a2 2 0 0 1 2-2h11v3.5M16 12h4', transactions: 'M7 7h11m0 0-3-3m3 3-3 3M17 17H6m0 0 3 3m-3-3 3-3', merchants: 'M4 10v10h16V10M3 10l2-6h14l2 6M8 20v-6h5v6', 'api-keys': 'M14 8a4 4 0 1 1-7.5 2L2 14.5V18h3v-2h2v-2h2l1-1', webhooks: 'M7 7a5 5 0 0 1 9-1M17 17a5 5 0 0 1-8 1M4 15a5 5 0 0 1 0-9m12 0h-3m3 0v3M9 18H6m3 0v-3', 'payment-sessions': 'M4 5h16v14H4zM4 9h16M8 15h3', refunds: 'M5 8h11a4 4 0 0 1 0 8H9M5 8l3-3M5 8l3 3', 'test-cards': 'M3 6h18v12H3zM3 10h18M7 15h3', search: 'm20 20-4.5-4.5M18 11a7 7 0 1 1-14 0 7 7 0 0 1 14 0', chevron: 'm8 10 4 4 4-4', menu: 'M4 7h16M4 12h16M4 17h16', logout: 'M10 5H5v14h5M14 8l4 4-4 4m4-4H9', link: 'M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 1-7 7l-2-2a5 5 0 0 1 7-7l1 1', layers: 'm12 3 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5M3 17l9 5 9-5', check: 'm5 12 4 4L19 6' }
-  return <svg className={className} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name] || paths.overview} /></svg>
 }

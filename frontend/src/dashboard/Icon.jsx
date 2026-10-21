@@ -1,0 +1,44 @@
+const paths = {
+  overview: ['M3 11.5 12 4l9 7.5', 'M5.5 10v10h13V10', 'M9 20v-6h6v6'],
+  wallet: ['M4 6.5h14a2 2 0 0 1 2 2V18H4a2 2 0 0 1-2-2V6.5Z', 'M4 6.5V5a2 2 0 0 1 2-2h11v3.5', 'M16 12h4'],
+  transactions: ['M7 7h11', 'm18 7-3-3', 'm18 7-3 3', 'M17 17H6', 'm6 17 3 3', 'm6 17 3-3'],
+  merchants: ['M4 10v10h16V10', 'm3 10 2-6h14l2 6', 'M8 20v-6h5v6', 'M4 10h16'],
+  'api-keys': ['M14 8a4 4 0 1 1-7.5 2L2 14.5V18h3v-2h2v-2h2l1-1'],
+  webhooks: ['M7 7a5 5 0 0 1 9-1', 'M17 17a5 5 0 0 1-8 1', 'M4 15a5 5 0 0 1 0-9', 'M16 6h-3', 'M16 6v3', 'M9 18H6', 'M9 18v-3'],
+  'payment-sessions': ['M4 5h16v14H4z', 'M4 9h16', 'M8 15h3'],
+  refunds: ['M5 8h11a4 4 0 0 1 0 8H9', 'm5 8 3-3', 'm5 8 3 3'],
+  'test-cards': ['M3 6h18v12H3z', 'M3 10h18', 'M7 15h3'],
+  search: ['m20 20-4.5-4.5', 'M18 11a7 7 0 1 1-14 0 7 7 0 0 1 14 0'],
+  chevron: ['m8 10 4 4 4-4'],
+  menu: ['M4 7h16', 'M4 12h16', 'M4 17h16'],
+  logout: ['M10 5H5v14h5', 'm14 8 4 4-4 4', 'M18 12H9'],
+  link: ['M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1', 'M14 11a5 5 0 0 1-7 7l-2-2a5 5 0 0 1 7-7l1 1'],
+  layers: ['m12 3 9 5-9 5-9-5 9-5Z', 'm3 13 9 5 9-5', 'm3 17 9 5 9-5'],
+  check: ['m5 12 4 4L19 6'],
+  plus: ['M12 5v14', 'M5 12h14'],
+  store: ['M4 10v10h16V10', 'm3 10 2-6h14l2 6', 'M8 20v-6h5v6', 'M4 10h16'],
+  active: ['M21.8 10A10 10 0 1 1 17 3.3', 'm9 11 3 3L22 4'],
+  disabled: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z', 'm4.9 4.9 14.2 14.2'],
+  globe: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z', 'M2 12h20', 'M12 2a15 15 0 0 1 0 20', 'M12 2a15 15 0 0 0 0 20'],
+  external: ['M15 3h6v6', 'm10 14 11-11', 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'],
+  copy: ['M8 8h11v11H8z', 'M5 16H4V5h11v1'],
+  pencil: ['m4 20 4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11Z', 'm14.5 6.5 3 3'],
+  arrowLeft: ['m15 18-6-6 6-6', 'M9 12h11'],
+  arrowRight: ['m9 18 6-6-6-6', 'M4 12h11'],
+  arrowUpRight: ['M7 17 17 7', 'M7 7h10v10'],
+  key: ['M14 8a4 4 0 1 1-7.5 2L2 14.5V18h3v-2h2v-2h2l1-1'],
+  clock: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z', 'M12 6v6l4 2'],
+  alert: ['M12 9v4', 'M12 17h.01', 'M10.3 3.7 2-1.2 9 16A2 2 0 0 1 19.5 21h-15A2 2 0 0 1 2.7 18.5Z'],
+  x: ['M6 6l12 12', 'M18 6 6 18'],
+  loader: ['M21 12a9 9 0 1 1-6.2-8.6'],
+  calendar: ['M6 2v4', 'M18 2v4', 'M3 9h18', 'M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z'],
+  refresh: ['M20 7h-5V2', 'M4 17h5v5', 'M5.5 9a7 7 0 0 1 11.8-3L20 7', 'M18.5 15a7 7 0 0 1-11.8 3L4 17'],
+  moon: ['M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5 8.5 8.5 0 1 0 20.5 15.5Z'],
+  sun: ['M12 3V1', 'M12 23v-2', 'm4.22 4.22-1.42-1.42', 'm21.2 21.2-1.42-1.42', 'M3 12H1', 'M23 12h-2', 'm4.22 19.78-1.42 1.42', 'm21.2 2.8-1.42 1.42', 'M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z'],
+}
+
+export default function Icon({ name, className = '' }) {
+  return <svg className={className} aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    {(paths[name] || paths.overview).map((path) => <path d={path} key={path} />)}
+  </svg>
+}

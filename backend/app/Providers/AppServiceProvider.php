@@ -66,6 +66,16 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(30)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip()));
         });
 
+        RateLimiter::for('api-key-management', function (Request $request): Limit {
+            return Limit::perMinute(10)->by((string) ($request->user()?->getAuthIdentifier() ?? $request->ip()));
+        });
+
+        RateLimiter::for('merchant-api', function (Request $request): Limit {
+            $credential = $request->bearerToken();
+
+            return Limit::perMinute(120)->by($credential ? hash('sha256', $credential) : $request->ip());
+        });
+
         // Point the link in the reset email at the React frontend instead of a backend page.
         ResetPassword::createUrlUsing(function ($user, string $token): string {
             return rtrim((string) config('services.frontend_url'), '/').'/'.'?'.http_build_query([

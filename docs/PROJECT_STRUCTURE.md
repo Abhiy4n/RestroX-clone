@@ -60,9 +60,13 @@ Laravel API and backend application.
 | `backend/app/Enums/GoogleAuthOutcome.php` | Represents Google authentication outcomes. |
 | `backend/app/Exceptions/WalletOperationException.php` | Reports wallet operation failures. |
 | `backend/app/Http/Controllers/Controller.php` | Base HTTP controller. |
+| `backend/app/Http/Controllers/Api/ApiKeyController.php` | Lists and issues API credentials across an authenticated user's merchants. |
 | `backend/app/Http/Controllers/Api/CurrentUserController.php` | Returns the authenticated user's details. |
 | `backend/app/Http/Controllers/Api/LoginController.php` | Handles API login. |
 | `backend/app/Http/Controllers/Api/LogoutController.php` | Handles API logout. |
+| `backend/app/Http/Controllers/Api/MerchantApiKeyController.php` | Lists, issues, and revokes merchant API credentials. |
+| `backend/app/Http/Controllers/Api/MerchantController.php` | Handles merchant listing, creation, viewing, and updates. |
+| `backend/app/Http/Controllers/Api/MerchantIdentityController.php` | Returns the merchant authenticated by an integration key. |
 | `backend/app/Http/Controllers/Api/NewPasswordController.php` | Handles password reset completion. |
 | `backend/app/Http/Controllers/Api/PasswordResetLinkController.php` | Sends password reset links. |
 | `backend/app/Http/Controllers/Api/RegisterController.php` | Handles API registration. |
@@ -70,13 +74,19 @@ Laravel API and backend application.
 | `backend/app/Http/Controllers/Api/VerifyEmailController.php` | Handles email verification. |
 | `backend/app/Http/Controllers/Api/WalletController.php` | Handles wallet API operations. |
 | `backend/app/Http/Controllers/Auth/GoogleAuthController.php` | Handles Google OAuth callbacks. |
+| `backend/app/Http/Middleware/AuthenticateMerchantApiKey.php` | Authenticates active merchants from hashed integration credentials. |
 | `backend/app/Http/Requests/AddMoneyRequest.php` | Validates wallet deposit requests. |
 | `backend/app/Http/Requests/LoginRequest.php` | Validates login requests. |
 | `backend/app/Http/Requests/RegisterRequest.php` | Validates registration requests. |
 | `backend/app/Http/Requests/ResetPasswordRequest.php` | Validates password reset requests. |
 | `backend/app/Http/Requests/SendMoneyRequest.php` | Validates wallet transfer requests. |
 | `backend/app/Http/Requests/SendPasswordResetLinkRequest.php` | Validates password reset link requests. |
+| `backend/app/Http/Requests/StoreMerchantApiKeyRequest.php` | Validates merchant API-key issuance requests. |
+| `backend/app/Http/Requests/StoreMerchantRequest.php` | Validates merchant creation requests. |
+| `backend/app/Http/Requests/UpdateMerchantRequest.php` | Validates merchant update and status requests. |
 | `backend/app/Http/Resources/LedgerTransactionResource.php` | Serializes ledger transactions for the API. |
+| `backend/app/Http/Resources/MerchantApiKeyResource.php` | Serializes safe merchant API-key metadata. |
+| `backend/app/Http/Resources/MerchantResource.php` | Serializes merchant details for the API. |
 | `backend/app/Http/Resources/UserResource.php` | Serializes users for the API. |
 | `backend/app/Http/Resources/UserSessionResource.php` | Serializes user sessions for the API. |
 | `backend/app/Http/Resources/WalletResource.php` | Serializes wallets for the API. |
@@ -86,9 +96,11 @@ Laravel API and backend application.
 | `backend/app/Models/LedgerTransaction.php` | Represents a ledger transaction. |
 | `backend/app/Models/LoginActivity.php` | Represents recorded login activity. |
 | `backend/app/Models/Merchant.php` | Represents a merchant. |
+| `backend/app/Models/MerchantApiKey.php` | Represents a hashed, revocable merchant integration credential. |
 | `backend/app/Models/SocialAccount.php` | Represents a linked social account. |
 | `backend/app/Models/User.php` | Represents an application user. |
 | `backend/app/Models/Wallet.php` | Represents a user wallet. |
+| `backend/app/Policies/MerchantPolicy.php` | Enforces merchant ownership and active-account access. |
 | `backend/app/Providers/AppServiceProvider.php` | Registers application services and bindings. |
 | `backend/app/Services/LedgerService.php` | Performs ledger operations. |
 | `backend/app/Services/WalletSetup.php` | Sets up wallet-related records. |
@@ -115,6 +127,8 @@ Laravel API and backend application.
 | `backend/config/session.php` | Session settings. |
 | `backend/database/.gitignore` | Keeps generated database files out of version control. |
 | `backend/database/factories/UserFactory.php` | Creates users for tests and seed data. |
+| `backend/database/factories/MerchantApiKeyFactory.php` | Creates merchant API credentials for tests. |
+| `backend/database/factories/MerchantFactory.php` | Creates merchants for tests and seed data. |
 | `backend/database/migrations/0001_01_01_000000_create_users_table.php` | Creates users and password reset storage. |
 | `backend/database/migrations/0001_01_01_000001_create_cache_table.php` | Creates cache storage tables. |
 | `backend/database/migrations/0001_01_01_000002_create_jobs_table.php` | Creates queue job tables. |
@@ -131,6 +145,8 @@ Laravel API and backend application.
 | `backend/database/migrations/2026_10_20_063630_create_idempotency_keys_table.php` | Creates request idempotency storage. |
 | `backend/database/migrations/2026_10_20_153958_backfill_wallets_and_ledger_accounts_for_existing_users.php` | Backfills wallet and ledger accounts for existing users. |
 | `backend/database/migrations/2026_10_20_154739_scope_wallet_idempotency_keys.php` | Scopes idempotency keys to wallets. |
+| `backend/database/migrations/2026_10_20_190435_create_merchant_api_keys_table.php` | Creates hashed merchant API credential storage. |
+| `backend/database/migrations/2026_10_20_190436_add_integration_type_to_merchants_table.php` | Adds merchant integration-type metadata. |
 | `backend/database/seeders/AdminSeeder.php` | Seeds the administrator account. |
 | `backend/database/seeders/DatabaseSeeder.php` | Coordinates database seeders. |
 
@@ -153,6 +169,9 @@ Laravel API and backend application.
 | `backend/tests/Feature/AuthEndpointsTest.php` | Tests authentication API endpoints. |
 | `backend/tests/Feature/ExampleTest.php` | Framework example feature test. |
 | `backend/tests/Feature/GoogleAuthTest.php` | Tests Google authentication flows. |
+| `backend/tests/Feature/MerchantApiKeyTest.php` | Tests API-key issuance, isolation, revocation, and merchant authentication. |
+| `backend/tests/Feature/MerchantApiTest.php` | Tests merchant management, validation, and ownership isolation. |
+| `backend/tests/Feature/MerchantRelationshipsTest.php` | Tests merchant ownership and settlement-wallet relationships. |
 | `backend/tests/Feature/MySqlWalletConcurrencyTest.php` | Tests wallet concurrency against MySQL. |
 | `backend/tests/Feature/UserSessionsTest.php` | Tests user session endpoints. |
 | `backend/tests/Feature/WalletApiTest.php` | Tests wallet API behavior. |
@@ -178,7 +197,12 @@ React and Vite client application.
 | `frontend/src/styles/motion.css` | Reusable search, dropdown, navigation, result, and reduced-motion styles. |
 | `frontend/src/main.jsx` | React application entry point. |
 | `frontend/src/dashboard/Dashboard.jsx` | Authenticated sandbox dashboard and live wallet overview. |
+| `frontend/src/dashboard/Icon.jsx` | Shared dashboard SVG icon renderer. |
 | `frontend/src/dashboard/dashboard.css` | Dashboard layout and component styles based on the approved silver reference. |
+| `frontend/src/dashboard/integration/ApiKeysPage.jsx` | API-key listing, issuance, one-time secret, filtering, and revocation interfaces. |
+| `frontend/src/dashboard/integration/IntegrationUi.jsx` | Shared integration modals, badges, pagination, loading, copy, and notice components. |
+| `frontend/src/dashboard/integration/MerchantsPage.jsx` | Merchant listing, creation, editing, detail, and status-management interfaces. |
+| `frontend/src/dashboard/integration/integration.css` | Merchant and API-key visual, responsive, and motion styles. |
 | `frontend/src/auth/api.js` | Authentication API client helpers. |
 | `frontend/src/auth/auth.css` | Authentication page styles. |
 | `frontend/src/auth/AuthPage.jsx` | Authentication page component. |

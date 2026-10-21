@@ -21,7 +21,7 @@
 .motion-results { visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(-8px) scale(.98); transform-origin: top left; transition: opacity var(--motion-normal) ease, transform var(--motion-normal) var(--motion-ease), visibility 0s linear var(--motion-normal); }
 .motion-results.open { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); transition-delay: 0s; }
 .motion-results.open > button { animation: result-enter 200ms both; animation-delay: calc(var(--result-index, 0) * 30ms); }
-.motion-route-content { animation: route-enter var(--motion-normal) var(--motion-ease) both; }
+.motion-route-content { animation: route-enter var(--motion-normal) var(--motion-ease) backwards; }
 .motion-action { transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform var(--motion-press) ease; }
 .motion-action:active:not(:disabled) { transform: scale(.985); }
 .compact-spinner { width: 15px; height: 15px; flex: none; border: 2px solid #a6abb2; border-top-color: #4f5660; border-radius: 50%; animation: motion-spin 650ms linear infinite; }
