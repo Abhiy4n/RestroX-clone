@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\MerchantController;
 use App\Http\Controllers\Api\MerchantIdentityController;
 use App\Http\Controllers\Api\NewPasswordController;
 use App\Http\Controllers\Api\PasswordResetLinkController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PaymentDashboardController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\UserSessionController;
 use App\Http\Controllers\Api\VerifyEmailController;
@@ -25,6 +27,10 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])->middlew
 
 Route::get('/v1/merchant', MerchantIdentityController::class)
     ->middleware(['merchant.api-key', 'throttle:merchant-api']);
+Route::middleware(['merchant.api-key', 'throttle:merchant-api'])->group(function () {
+    Route::post('/v1/payments', [PaymentController::class, 'store']);
+    Route::get('/v1/payments/{payment}', [PaymentController::class, 'show']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [CurrentUserController::class, 'show']);
@@ -35,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/wallet/send-money', [WalletController::class, 'sendMoney'])->middleware('throttle:wallet-mutations');
     Route::apiResource('merchants', MerchantController::class)->only(['index', 'store', 'show', 'update']);
     Route::get('/api-keys', [ApiKeyController::class, 'index']);
+    Route::get('/payments', [PaymentDashboardController::class, 'index']);
     Route::post('/api-keys', [ApiKeyController::class, 'store'])->middleware('throttle:api-key-management');
     Route::post('/api-keys/{apiKey}/revoke', [MerchantApiKeyController::class, 'revoke'])
         ->middleware('throttle:api-key-management');

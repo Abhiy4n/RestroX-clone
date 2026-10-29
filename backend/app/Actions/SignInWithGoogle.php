@@ -29,7 +29,7 @@ class SignInWithGoogle
      * automatically. That would let anyone with a Google account for the email take over
      * the account. The owner has to log in normally and link Google from their settings.
      */
-    public function handle(string $providerUserId, string $email, ?string $name): GoogleAuthOutcome
+    public function handle(string $providerUserId, string $email, ?string $name, bool $remember = false): GoogleAuthOutcome
     {
         $socialAccount = SocialAccount::query()
             ->with('user')
@@ -38,7 +38,7 @@ class SignInWithGoogle
             ->first();
 
         if ($socialAccount !== null) {
-            return $this->signInLinkedUser($socialAccount->user);
+            return $this->signInLinkedUser($socialAccount->user, $remember);
         }
 
         if (User::query()->where('email', $email)->exists()) {
@@ -81,7 +81,7 @@ class SignInWithGoogle
             return GoogleAuthOutcome::LinkRequired;
         }
 
-        Auth::guard('web')->login($user);
+        Auth::guard('web')->login($user, $remember);
         Log::info('User registered and authenticated with Google.', ['user_id' => $user->getKey()]);
 
         return GoogleAuthOutcome::Success;
@@ -90,7 +90,7 @@ class SignInWithGoogle
     /**
      * Log in a user who already has this Google account linked, unless they are deactivated.
      */
-    private function signInLinkedUser(User $user): GoogleAuthOutcome
+    private function signInLinkedUser(User $user, bool $remember): GoogleAuthOutcome
     {
         if (! $user->is_active) {
             Log::notice('Disabled account rejected during Google sign-in.', ['user_id' => $user->getKey()]);
@@ -98,7 +98,7 @@ class SignInWithGoogle
             return GoogleAuthOutcome::Failed;
         }
 
-        Auth::guard('web')->login($user);
+        Auth::guard('web')->login($user, $remember);
         Log::info('User authenticated with Google.', ['user_id' => $user->getKey()]);
 
         return GoogleAuthOutcome::Success;

@@ -16,6 +16,15 @@ class GoogleAuthTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_sign_in_redirect_remembers_the_persistent_login_choice(): void
+    {
+        Socialite::fake('google');
+
+        $this->get('/auth/google/redirect?remember=1')
+            ->assertRedirect('https://socialite.fake/google/authorize')
+            ->assertSessionHas('google_oauth_remember', true);
+    }
+
     public function test_link_redirect_remembers_the_link_intent(): void
     {
         Socialite::fake('google');
@@ -58,6 +67,19 @@ class GoogleAuthTest extends TestCase
         $this->get('/auth/google/callback')->assertRedirect($this->frontendUrl('success'));
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_google_sign_in_can_remember_the_user(): void
+    {
+        $user = User::factory()->create(['remember_token' => null]);
+        $this->linkGoogle($user);
+        $this->fakeGoogleUser(email: $user->email);
+
+        $this->withSession(['google_oauth_remember' => true])
+            ->get('/auth/google/callback')
+            ->assertRedirect($this->frontendUrl('success'));
+
+        $this->assertNotNull($user->fresh()->remember_token);
     }
 
     public function test_disabled_account_is_rejected_during_google_sign_in(): void

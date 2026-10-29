@@ -3,6 +3,8 @@ import { apiRequest } from '../auth/api.js'
 import '../styles/motion.css'
 import ApiKeysPage from './integration/ApiKeysPage.jsx'
 import MerchantsPage from './integration/MerchantsPage.jsx'
+import PaymentSessionsPage from './integration/PaymentSessionsPage.jsx'
+import CheckoutPreviewPage from './mockups/CheckoutPreviewPage.jsx'
 import Icon from './Icon.jsx'
 import './dashboard.css'
 import './integration/integration.css'
@@ -11,6 +13,7 @@ const navigation = [
   { label: 'Workspace', items: [{ id: 'overview', label: 'Overview', path: '/dashboard' }, { id: 'wallet', label: 'Wallet', path: '/dashboard/wallet' }, { id: 'transactions', label: 'Transactions', path: '/dashboard/transactions' }] },
   { label: 'Integration', items: [{ id: 'merchants', label: 'Merchants', path: '/dashboard/merchants' }, { id: 'api-keys', label: 'API Keys', path: '/dashboard/api-keys' }, { id: 'webhooks', label: 'Webhooks', path: '/dashboard/webhooks' }] },
   { label: 'Payments', items: [{ id: 'payment-sessions', label: 'Payment Sessions', path: '/dashboard/payment-sessions' }, { id: 'refunds', label: 'Refunds', path: '/dashboard/refunds' }, { id: 'test-cards', label: 'Test Cards', path: '/dashboard/test-cards' }] },
+  { label: 'Mockups', items: [{ id: 'checkout-preview', label: 'Checkout Preview', path: '/dashboard/mockups/checkout' }] },
 ]
 
 const navigationItems = navigation.flatMap((group) => group.items)
@@ -26,6 +29,7 @@ const pages = {
   'payment-sessions': ['Payment sessions', 'Track hosted checkouts and payment states'],
   refunds: ['Refunds', 'Issue simulated payment reversals'],
   'test-cards': ['Test cards', 'Simulate card payment outcomes'],
+  'checkout-preview': ['Checkout preview', 'Preview the proposed hosted payment experience'],
 }
 
 export default function Dashboard({ user, onLogout, isLoggingOut }) {
@@ -55,7 +59,7 @@ export default function Dashboard({ user, onLogout, isLoggingOut }) {
     ? navigationItems.filter((item) => item.label.toLowerCase().includes(query.trim().toLowerCase()))
     : []
   const showSearchResults = searchOpen && hasSearchQuery
-  const isIntegrationPage = ['merchants', 'api-keys'].includes(activePage)
+  const isIntegrationPage = ['merchants', 'api-keys', 'payment-sessions', 'checkout-preview'].includes(activePage)
   const [title, description] = pages[activePage]
   const theme = themePreference === 'system' ? systemTheme : themePreference
 
@@ -249,7 +253,9 @@ export default function Dashboard({ user, onLogout, isLoggingOut }) {
           {activePage === 'transactions' && <TransactionList transactions={transactions} />}
           {activePage === 'merchants' && <MerchantsPage />}
           {activePage === 'api-keys' && <ApiKeysPage />}
-          {!['overview', 'wallet', 'transactions', 'merchants', 'api-keys'].includes(activePage) && <UpcomingPanel title={title} />}
+          {activePage === 'payment-sessions' && <PaymentSessionsPage />}
+          {activePage === 'checkout-preview' && <CheckoutPreviewPage />}
+          {!['overview', 'wallet', 'transactions', 'merchants', 'api-keys', 'payment-sessions', 'checkout-preview'].includes(activePage) && <UpcomingPanel title={title} />}
         </div>
       </section>
     </div>

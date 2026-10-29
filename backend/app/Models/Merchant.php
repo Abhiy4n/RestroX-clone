@@ -72,6 +72,12 @@ class Merchant extends Model
         return $this->hasMany(MerchantApiKey::class);
     }
 
+    /** @return HasMany<Payment, $this> */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function settlementWallet(): HasOneThrough
     {
         return $this->hasOneThrough(

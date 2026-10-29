@@ -64,6 +64,30 @@
 .google-icon { width: 18px; height: 18px; flex: none; }
 .auth-form { display: grid; gap: 22px; }
 .auth-form--register { gap: 15px; }
+.last-account {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 11px;
+  margin: -11px 0 19px;
+  padding: 10px 12px;
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  color: #292929;
+  background: #fafafa;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 160ms ease, border-color 160ms ease, transform var(--motion-press) ease;
+}
+.last-account:hover { border-color: #cdcdcd; background: #f6f6f6; }
+.last-account:active { transform: scale(.99); }
+.last-account:focus-visible { outline: 3px solid rgba(74, 74, 74, .2); outline-offset: 3px; }
+.last-account-avatar { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border-radius: 50%; color: #fff; background: #303030; font-size: 13px; font-weight: 700; text-transform: uppercase; }
+.last-account-details { display: grid; min-width: 0; flex: 1; gap: 2px; }
+.last-account-details strong, .last-account-details small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.last-account-details strong { font-size: 12px; font-weight: 650; }
+.last-account-details small { color: #8a8a8a; font-size: 10px; }
+.last-account-badge { flex: none; padding: 4px 7px; border-radius: 999px; color: #666; background: #ececec; font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .field { display: grid; gap: 7px; color: #2a2a2a; font-size: 13px; font-weight: 500; }
 .field-input-wrap { position: relative; display: flex; align-items: center; }
 .field-input-wrap > input {

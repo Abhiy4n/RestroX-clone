@@ -7,6 +7,7 @@ File-level entries below cover maintained application source, project configurat
 | Path | Purpose |
 | --- | --- |
 | `AGENTS.md` | Repository-wide instructions for coding agents. |
+| `plan.md` | Source-of-truth product roadmap and implementation progress checklist. |
 | `docs/PROJECT_STRUCTURE.md` | Concise map of maintained project files; update it when task changes alter the map. |
 | `demo.html` | Silver Dashboard visual and interaction reference. |
 | `.agents/skills/ponytail/SKILL.md` | Upstream Ponytail skill for choosing the smallest complete solution; imported from [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail/tree/09c434ab73ca43761c5d8b0c5d341926c2fba710/skills/ponytail). |
@@ -69,6 +70,8 @@ Laravel API and backend application.
 | `backend/app/Http/Controllers/Api/MerchantIdentityController.php` | Returns the merchant authenticated by an integration key. |
 | `backend/app/Http/Controllers/Api/NewPasswordController.php` | Handles password reset completion. |
 | `backend/app/Http/Controllers/Api/PasswordResetLinkController.php` | Sends password reset links. |
+| `backend/app/Http/Controllers/Api/PaymentController.php` | Creates and retrieves project-scoped sandbox payments. |
+| `backend/app/Http/Controllers/Api/PaymentDashboardController.php` | Lists and summarizes an authenticated user's project payments. |
 | `backend/app/Http/Controllers/Api/RegisterController.php` | Handles API registration. |
 | `backend/app/Http/Controllers/Api/UserSessionController.php` | Lists and manages user sessions. |
 | `backend/app/Http/Controllers/Api/VerifyEmailController.php` | Handles email verification. |
@@ -77,6 +80,7 @@ Laravel API and backend application.
 | `backend/app/Http/Middleware/AuthenticateMerchantApiKey.php` | Authenticates active merchants from hashed integration credentials. |
 | `backend/app/Http/Requests/AddMoneyRequest.php` | Validates wallet deposit requests. |
 | `backend/app/Http/Requests/LoginRequest.php` | Validates login requests. |
+| `backend/app/Http/Requests/StorePaymentRequest.php` | Validates merchant payment creation requests. |
 | `backend/app/Http/Requests/RegisterRequest.php` | Validates registration requests. |
 | `backend/app/Http/Requests/ResetPasswordRequest.php` | Validates password reset requests. |
 | `backend/app/Http/Requests/SendMoneyRequest.php` | Validates wallet transfer requests. |
@@ -87,6 +91,7 @@ Laravel API and backend application.
 | `backend/app/Http/Resources/LedgerTransactionResource.php` | Serializes ledger transactions for the API. |
 | `backend/app/Http/Resources/MerchantApiKeyResource.php` | Serializes safe merchant API-key metadata. |
 | `backend/app/Http/Resources/MerchantResource.php` | Serializes merchant details for the API. |
+| `backend/app/Http/Resources/PaymentResource.php` | Serializes sandbox payment details for the API. |
 | `backend/app/Http/Resources/UserResource.php` | Serializes users for the API. |
 | `backend/app/Http/Resources/UserSessionResource.php` | Serializes user sessions for the API. |
 | `backend/app/Http/Resources/WalletResource.php` | Serializes wallets for the API. |
@@ -97,6 +102,7 @@ Laravel API and backend application.
 | `backend/app/Models/LoginActivity.php` | Represents recorded login activity. |
 | `backend/app/Models/Merchant.php` | Represents a merchant. |
 | `backend/app/Models/MerchantApiKey.php` | Represents a hashed, revocable merchant integration credential. |
+| `backend/app/Models/Payment.php` | Represents a project-scoped sandbox payment and its lifecycle state. |
 | `backend/app/Models/SocialAccount.php` | Represents a linked social account. |
 | `backend/app/Models/User.php` | Represents an application user. |
 | `backend/app/Models/Wallet.php` | Represents a user wallet. |
@@ -129,6 +135,7 @@ Laravel API and backend application.
 | `backend/database/factories/UserFactory.php` | Creates users for tests and seed data. |
 | `backend/database/factories/MerchantApiKeyFactory.php` | Creates merchant API credentials for tests. |
 | `backend/database/factories/MerchantFactory.php` | Creates merchants for tests and seed data. |
+| `backend/database/factories/PaymentFactory.php` | Creates sandbox payments for tests. |
 | `backend/database/migrations/0001_01_01_000000_create_users_table.php` | Creates users and password reset storage. |
 | `backend/database/migrations/0001_01_01_000001_create_cache_table.php` | Creates cache storage tables. |
 | `backend/database/migrations/0001_01_01_000002_create_jobs_table.php` | Creates queue job tables. |
@@ -147,6 +154,7 @@ Laravel API and backend application.
 | `backend/database/migrations/2026_10_20_154739_scope_wallet_idempotency_keys.php` | Scopes idempotency keys to wallets. |
 | `backend/database/migrations/2026_10_20_190435_create_merchant_api_keys_table.php` | Creates hashed merchant API credential storage. |
 | `backend/database/migrations/2026_10_20_190436_add_integration_type_to_merchants_table.php` | Adds merchant integration-type metadata. |
+| `backend/database/migrations/2026_10_23_135812_create_payments_table.php` | Creates project-scoped sandbox payment storage. |
 | `backend/database/seeders/AdminSeeder.php` | Seeds the administrator account. |
 | `backend/database/seeders/DatabaseSeeder.php` | Coordinates database seeders. |
 
@@ -172,6 +180,8 @@ Laravel API and backend application.
 | `backend/tests/Feature/MerchantApiKeyTest.php` | Tests API-key issuance, isolation, revocation, and merchant authentication. |
 | `backend/tests/Feature/MerchantApiTest.php` | Tests merchant management, validation, and ownership isolation. |
 | `backend/tests/Feature/MerchantRelationshipsTest.php` | Tests merchant ownership and settlement-wallet relationships. |
+| `backend/tests/Feature/PaymentApiTest.php` | Tests payment creation, retrieval, validation, isolation, and idempotency. |
+| `backend/tests/Feature/PaymentDashboardTest.php` | Tests owner payment listing, summaries, filters, and access control. |
 | `backend/tests/Feature/MySqlWalletConcurrencyTest.php` | Tests wallet concurrency against MySQL. |
 | `backend/tests/Feature/UserSessionsTest.php` | Tests user session endpoints. |
 | `backend/tests/Feature/WalletApiTest.php` | Tests wallet API behavior. |
@@ -202,7 +212,10 @@ React and Vite client application.
 | `frontend/src/dashboard/integration/ApiKeysPage.jsx` | API-key listing, issuance, one-time secret, filtering, and revocation interfaces. |
 | `frontend/src/dashboard/integration/IntegrationUi.jsx` | Shared integration modals, badges, pagination, loading, copy, and notice components. |
 | `frontend/src/dashboard/integration/MerchantsPage.jsx` | Merchant listing, creation, editing, detail, and status-management interfaces. |
+| `frontend/src/dashboard/integration/PaymentSessionsPage.jsx` | Project payment listing, summaries, filtering, pagination, and detail interface. |
 | `frontend/src/dashboard/integration/integration.css` | Merchant and API-key visual, responsive, and motion styles. |
+| `frontend/src/dashboard/mockups/CheckoutPreviewPage.jsx` | Interactive hosted-checkout mockup for direct and test-card payments. |
+| `frontend/src/dashboard/mockups/checkout-preview.css` | Responsive styling for the hosted-checkout preview workspace. |
 | `frontend/src/auth/api.js` | Authentication API client helpers. |
 | `frontend/src/auth/auth.css` | Authentication page styles. |
 | `frontend/src/auth/AuthPage.jsx` | Authentication page component. |

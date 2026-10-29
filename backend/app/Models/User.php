@@ -80,6 +80,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Merchant::class);
     }
 
+    /** @return HasMany<Payment, $this> */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'customer_id');
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;

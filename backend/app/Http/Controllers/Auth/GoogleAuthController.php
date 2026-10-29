@@ -24,8 +24,10 @@ class GoogleAuthController extends Controller
     /**
      * Send the user to Google's sign-in page.
      */
-    public function redirect(): RedirectResponse
+    public function redirect(Request $request): RedirectResponse
     {
+        $request->session()->put('google_oauth_remember', $request->boolean('remember'));
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -53,6 +55,7 @@ class GoogleAuthController extends Controller
         LinkGoogleAccount $linkGoogleAccount,
     ): RedirectResponse {
         $intent = $request->session()->pull('google_oauth_intent', 'signin');
+        $remember = $request->session()->pull('google_oauth_remember', false);
 
         // This throws if the user clicked "Cancel" on Google's page or the request was tampered with.
         try {
@@ -71,7 +74,7 @@ class GoogleAuthController extends Controller
 
         $outcome = $intent === 'link'
             ? $linkGoogleAccount->handle($request->user(), $providerUserId, $email)
-            : $signInWithGoogle->handle($providerUserId, $email, $googleUser->getName());
+            : $signInWithGoogle->handle($providerUserId, $email, $googleUser->getName(), $remember);
 
         // Same reason as LoginController: a fresh session ID after logging in.
         if (in_array($outcome, [GoogleAuthOutcome::Success, GoogleAuthOutcome::Linked], true)) {

@@ -18,35 +18,41 @@
 }
 
 .merchants-page,
-.api-keys-page {
+.api-keys-page,
+.payments-page {
   width: min(100%, 1440px);
   margin-inline: auto;
 }
 
 .merchants-page .integration-page-head,
-.api-keys-page .integration-page-head {
+.api-keys-page .integration-page-head,
+.payments-page .integration-page-head {
   margin-bottom: 28px;
 }
 
 .merchants-page .integration-page-head h1,
-.api-keys-page .integration-page-head h1 {
+.api-keys-page .integration-page-head h1,
+.payments-page .integration-page-head h1 {
   font-size: clamp(1.55rem, 2vw, 1.75rem);
   font-weight: 650;
 }
 
 .merchants-page .integration-page-head p,
-.api-keys-page .integration-page-head p {
+.api-keys-page .integration-page-head p,
+.payments-page .integration-page-head p {
   color: #6f747d;
   font-size: .82rem;
 }
 
 .merchant-section-head,
-.api-key-section-head {
+.api-key-section-head,
+.payment-section-head {
   min-width: 180px;
 }
 
 .merchant-section-head h2,
-.api-key-section-head h2 {
+.api-key-section-head h2,
+.payment-section-head h2 {
   margin: 0;
   color: var(--text-primary);
   font-size: 1rem;
@@ -55,14 +61,16 @@
 }
 
 .merchant-section-head p,
-.api-key-section-head p {
+.api-key-section-head p,
+.payment-section-head p {
   margin: 5px 0 0;
   color: #747983;
   font-size: .76rem;
 }
 
 .merchant-panel-header,
-.api-key-panel-header {
+.api-key-panel-header,
+.payment-panel-header {
   display: flex;
   min-height: 78px;
   align-items: center;
@@ -73,12 +81,14 @@
 }
 
 .merchant-panel-header .integration-filters,
-.api-key-panel-header .integration-filters {
+.api-key-panel-header .integration-filters,
+.payment-panel-header .integration-filters {
   justify-content: flex-end;
 }
 
 .merchant-panel-header .filter-search,
-.api-key-panel-header .filter-search {
+.api-key-panel-header .filter-search,
+.payment-panel-header .filter-search {
   width: clamp(220px, 24vw, 300px);
 }
 
@@ -488,6 +498,25 @@
   font-size: .82rem;
 }
 
+.payments-table {
+  min-width: 940px;
+  font-size: .82rem;
+}
+
+.payments-table th:nth-child(1) { width: 185px; }
+.payments-table th:nth-child(2) { width: 145px; }
+.payments-table th:nth-child(3) { width: 155px; }
+.payments-table th:nth-child(4) { width: 120px; }
+.payments-table th:nth-child(5) { width: 105px; }
+.payments-table th:nth-child(6) { width: 130px; }
+.payments-table th:nth-child(7) { width: 70px; }
+
+.payment-amount {
+  color: var(--text-primary);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
 .merchants-table th:nth-child(1) { width: 48px; }
 .merchants-table th:nth-child(2) { width: 24%; }
 .merchants-table th:nth-child(3) { width: 25%; }
@@ -826,9 +855,33 @@
 }
 
 .status-active .status-dot { background: var(--status-active); }
+.status-succeeded .status-dot { background: var(--status-active); }
+.status-pending .status-dot { background: var(--status-warning); }
 .status-disabled .status-dot,
-.status-revoked .status-dot { background: var(--status-inactive); }
+.status-revoked .status-dot,
+.status-failed .status-dot,
+.status-cancelled .status-dot { background: var(--status-inactive); }
 .status-expired .status-dot { background: var(--status-warning); }
+
+.payment-detail-list {
+  display: grid;
+}
+
+.payment-detail-list .detail-info-row:last-child {
+  border-bottom: 0;
+}
+
+.detail-copy-value {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-copy-value code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .view-detail-action,
 .table-action,
@@ -1502,7 +1555,8 @@
   }
 
   .merchant-panel-header,
-  .api-key-panel-header {
+  .api-key-panel-header,
+  .payment-panel-header {
     align-items: flex-start;
   }
 
@@ -1545,14 +1599,16 @@
   }
 
   .merchant-panel-header,
-  .api-key-panel-header {
+  .api-key-panel-header,
+  .payment-panel-header {
     align-items: stretch;
     flex-direction: column;
     gap: 14px;
   }
 
   .merchant-panel-header .integration-filters,
-  .api-key-panel-header .integration-filters {
+  .api-key-panel-header .integration-filters,
+  .payment-panel-header .integration-filters {
     justify-content: flex-start;
   }
 

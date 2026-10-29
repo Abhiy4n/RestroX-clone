@@ -25,7 +25,33 @@ const emptyForm = {
   password_confirmation: '',
 }
 
+const rememberedAccountKey = 'restro.rememberedAccount'
+const googleRememberKey = 'restro.rememberGoogle'
+
+function readRememberedAccount() {
+  try {
+    const account = JSON.parse(window.localStorage.getItem(rememberedAccountKey))
+
+    return account
+      && typeof account.email === 'string'
+      && ['google', 'password'].includes(account.method)
+      ? account
+      : null
+  } catch {
+    return null
+  }
+}
+
+function saveRememberedAccount(user, method) {
+  window.localStorage.setItem(rememberedAccountKey, JSON.stringify({
+    name: user.name,
+    email: user.email,
+    method,
+  }))
+}
+
 export default function AuthPage() {
+  const [rememberedAccount, setRememberedAccount] = useState(readRememberedAccount)
   const [user, setUser] = useState(null)
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState(emptyForm)
@@ -33,7 +59,7 @@ export default function AuthPage() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [remember, setRemember] = useState(false)
+  const [remember, setRemember] = useState(Boolean(rememberedAccount))
   const [showPassword, setShowPassword] = useState(false)
   const [resetToken, setResetToken] = useState('')
 
@@ -55,9 +81,19 @@ export default function AuthPage() {
     }
 
     apiRequest('/api/user')
-      .then((result) => setUser(result.user))
+      .then((result) => {
+        setUser(result.user)
+
+        if (oauthStatus === 'success' && window.localStorage.getItem(googleRememberKey) === 'true') {
+          saveRememberedAccount(result.user, 'google')
+          setRememberedAccount({ name: result.user.name, email: result.user.email, method: 'google' })
+        }
+      })
       .catch(() => setUser(null))
-      .finally(() => setLoading(false))
+      .finally(() => {
+        window.localStorage.removeItem(googleRememberKey)
+        setLoading(false)
+      })
   }, [])
 
   function updateField(event) {
@@ -114,6 +150,13 @@ export default function AuthPage() {
         setForm({ ...emptyForm, email: form.email })
         setMode('login')
       } else if (mode === 'login') {
+        if (remember) {
+          saveRememberedAccount(result.user, 'password')
+          setRememberedAccount({ name: result.user.name, email: result.user.email, method: 'password' })
+        } else {
+          window.localStorage.removeItem(rememberedAccountKey)
+          setRememberedAccount(null)
+        }
         setUser(result.user)
       } else {
         setMessage(result.message)
@@ -150,6 +193,15 @@ export default function AuthPage() {
     setShowPassword(false)
     setMessage('')
     setFieldErrors({})
+  }
+
+  function continueWithGoogle() {
+    window.localStorage.setItem(googleRememberKey, String(remember))
+
+    if (!remember) {
+      window.localStorage.removeItem(rememberedAccountKey)
+      setRememberedAccount(null)
+    }
   }
 
   if (loading) {
@@ -192,6 +244,28 @@ export default function AuthPage() {
                 <p className="subtitle">{mode === 'register' ? 'Create an account to get started' : mode === 'forgot' ? 'We’ll email a secure reset link if an account exists' : mode === 'reset' ? 'Enter your new password below' : 'Please enter your details'}</p>
               </div>
 
+              {mode === 'login' && rememberedAccount && (
+                <button
+                  className="last-account"
+                  type="button"
+                  onClick={() => {
+                    if (rememberedAccount.method === 'google') {
+                      continueWithGoogle()
+                      window.location.assign('/auth/google/redirect?remember=1')
+                    } else {
+                      setForm((current) => ({ ...current, email: rememberedAccount.email }))
+                    }
+                  }}
+                >
+                  <span className="last-account-avatar" aria-hidden="true">{rememberedAccount.name?.[0] || rememberedAccount.email[0]}</span>
+                  <span className="last-account-details">
+                    <strong>{rememberedAccount.email}</strong>
+                    <small>{rememberedAccount.method === 'google' ? 'Google account' : 'Email account'}</small>
+                  </span>
+                  <span className="last-account-badge">Last used</span>
+                </button>
+              )}
+
               <form className={`auth-form${mode === 'register' ? ' auth-form--register' : ''}`} onSubmit={submit} noValidate>
                 {mode === 'register' && (
                   <Field label="Full name" name="name" value={form.name} onChange={updateField} error={fieldErrors.name?.[0]} autoComplete="name" />
@@ -231,7 +305,7 @@ export default function AuthPage() {
                   <div className="login-options">
                     <label className="remember-option">
                       <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
-                      <span>Remember for 30 days</span>
+                      <span>Remember me</span>
                     </label>
                     <button className="text-action" type="button" onClick={() => { setMode('forgot'); setMessage('') }}>Forgot password?</button>
                   </div>
@@ -246,7 +320,7 @@ export default function AuthPage() {
 
               {['login', 'register'].includes(mode) && <>
                 <div className="divider"><span>or continue with</span></div>
-                <a className="button button-google" href="/auth/google/redirect">
+                <a className="button button-google" href={`/auth/google/redirect${remember ? '?remember=1' : ''}`} onClick={continueWithGoogle}>
                   <GoogleIcon /> Continue with Google
                 </a>
               </>}
